@@ -31,3 +31,14 @@ def findCmdPath(cmdName: str) -> str | None:
         if os.path.isfile(fullPath) and os.access(fullPath, os.X_OK):
             return fullPath
     return None
+
+
+def expandEnvVars(args: list[str]) -> None:
+    for i, token in enumerate(args):
+        if token.startswith("'") and token.endswith("'"):
+            args[i] = token[1:-1]
+            continue
+        elif token.startswith('"') and token.endswith('"'):
+            args[i] = token[1:-1]
+        if "$" in token:
+            args[i] = os.path.expandvars(token)  # You should implement this yourself

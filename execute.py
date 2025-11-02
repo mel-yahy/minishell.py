@@ -1,5 +1,6 @@
 import sys
 from defs import AstNode, AstType, CmdNode, RedirNode, RedirType
+from utils import expandEnvVars
 import os
 
 
@@ -43,6 +44,7 @@ def executeCmd(cmd: CmdNode) -> None:
     if not cmd.path:
         print(f"{cmd.name}: command was not found", file=sys.stderr)
         sys.exit(127)
+    expandEnvVars(cmd.args)
     os.execve(cmd.path, cmd.args, os.environ)
 
 
