@@ -13,7 +13,7 @@ def shell_loop() -> None:
         except KeyboardInterrupt:
             print()
             continue
-        tokens = re.findall(r'[^"\s]\S*|".+?"', line)
+        tokens = re.findall(r'[^"\s\']\S*|"[^"]*"|\'[^\']*\'', line)
         pipeline = parsePipeline(tokens)
         if pipeline:
             execute(pipeline)
