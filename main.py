@@ -1,18 +1,19 @@
 from parse import parsePipeline
 from execute import execute
 import readline
+import re
 
 
 def shell_loop() -> None:
     while True:
         try:
-            command = input("sh.py> ")
+            line = input("sh.py> ")
         except EOFError:
             exit(0)
         except KeyboardInterrupt:
             print()
             continue
-        tokens = command.split()
+        tokens = re.findall(r'[^"\s]\S*|".+?"', line)
         pipeline = parsePipeline(tokens)
         if pipeline:
             execute(pipeline)
