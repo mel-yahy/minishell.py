@@ -37,7 +37,7 @@ def setupRedirs(redir: RedirNode) -> None:
     os.close(fd)
 
 
-def executeCmd(cmd: CmdNode) -> int:
+def executeCmd(cmd: CmdNode) -> None:
     if cmd.redir:
         setupRedirs(cmd.redir)
     if not cmd.path:
@@ -81,7 +81,7 @@ def execute(ast: AstNode) -> None:
     elif ast.type is AstType.CMD and ast.cmd:
         id = os.fork()
         if id == 0:
-            lastExitStatus = executeCmd(ast.cmd)
+            executeCmd(ast.cmd)
         _, status = os.waitpid(id, 0)
         if os.WIFEXITED(status):
             lastExitStatus = status
