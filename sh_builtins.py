@@ -10,17 +10,21 @@ def echoBuiltIn(args: list[str]) -> None:
     while i < len(args):
         endChar = " " if i != len(args) - 1 else ""
         print(args[i], end=endChar)
+        i += 1
     if not withOption:
         print()
+    sys.exit(0)
 
 
 def exitBuiltIn() -> None:
     sys.exit(config.LAST_EXIT)
 
 
-def cdBuiltIn(path: str) -> None:
+def cdBuiltIn(args: list[str]) -> None:
+    if len(args) > 2:
+        print("cd: too many arguments", file=sys.stderr)
     try:
-        os.chdir(path)
+        os.chdir(args[1])
     except OSError:
         print(f"cd: {OSError}")
 
@@ -28,11 +32,13 @@ def cdBuiltIn(path: str) -> None:
 def pwdBuiltIn() -> None:
     cwd = os.getcwd()
     print(cwd)
+    sys.exit(0)
 
 
 def envBuiltIn() -> None:
     for key, value in config.ENV.items():
         print(f"{key}={value}")
+    sys.exit(0)
 
 
 def exportBuiltIn(args: list[str]) -> None:
