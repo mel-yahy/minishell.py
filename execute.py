@@ -72,7 +72,7 @@ def executePipeline(ast: AstNode) -> int:
     _ = os.waitpid(id_1, 0)
     _, status = os.waitpid(id_2, 0)
     if os.WIFEXITED(status):
-        return status
+        return os.WEXITSTATUS(status)
     else:
         return 1
 
@@ -87,7 +87,7 @@ def execute(ast: AstNode) -> None:
             executeCmd(ast.cmd)
         _, status = os.waitpid(id, 0)
         if os.WIFEXITED(status):
-            lastExitStatus = status
+            lastExitStatus = os.WEXITSTATUS(status)
         else:
             lastExitStatus = 1
     config.LAST_EXIT = lastExitStatus
