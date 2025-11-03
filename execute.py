@@ -1,6 +1,7 @@
 import sys
 from defs import AstNode, AstType, CmdNode, RedirNode, RedirType
-from utils import expandEnvVars
+from utils import expandEnvVars, isNonStateChangingBuiltIn, isStateChangingBuiltIn
+from sh_builtins import *
 import config
 import os
 
@@ -39,6 +40,26 @@ def setupRedirs(redir: RedirNode) -> None:
     os.close(fd)
 
 
+def executeBuiltIns(cmdName: str, cmdArgs: list[str]) -> None:
+    match cmdName:
+        case "echo":
+            echoBuiltIn(cmdArgs)
+        case "cd":
+            cdBuiltIn(cmdArgs)
+        case "pwd":
+            pwdBuiltIn()
+        case "export":
+            exportBuiltIn(cmdArgs)
+        case "unset":
+            unsetBuiltIn(cmdArgs)
+        case "env":
+            envBuiltIn()
+        case "exit":
+            exitBuiltIn(cmdArgs)
+        case _:
+            pass
+
+
 def executeCmd(cmd: CmdNode) -> None:
     if cmd.redir:
         setupRedirs(cmd.redir)
@@ -46,7 +67,10 @@ def executeCmd(cmd: CmdNode) -> None:
         print(f"{cmd.name}: command was not found", file=sys.stderr)
         sys.exit(127)
     expandEnvVars(cmd.args)
-    os.execve(cmd.path, cmd.args, os.environ)
+    if isNonStateChangingBuiltIn(cmd.name):
+        executeBuiltIns(cmd.name, cmd.args)
+    else:
+        os.execve(cmd.path, cmd.args, config.ENV)
 
 
 def executePipeline(ast: AstNode) -> int:
@@ -58,7 +82,7 @@ def executePipeline(ast: AstNode) -> int:
             _ = os.dup2(writeEnd, 1)
             os.close(writeEnd)
             executeCmd(ast.left.cmd)
-        sys.exit(1)
+            sys.exit(0)
     id_2 = os.fork()
     if id_2 == 0:
         os.close(writeEnd)
@@ -66,7 +90,7 @@ def executePipeline(ast: AstNode) -> int:
             _ = os.dup2(readEnd, 0)
             os.close(readEnd)
             execute(ast.right)
-        sys.exit(1)
+            sys.exit(config.LAST_EXIT)
     os.close(readEnd)
     os.close(writeEnd)
     _ = os.waitpid(id_1, 0)
@@ -78,16 +102,17 @@ def executePipeline(ast: AstNode) -> int:
 
 
 def execute(ast: AstNode) -> None:
-    lastExitStatus = 0
     if ast.type is AstType.PIPELINE:
-        lastExitStatus = executePipeline(ast)
+        config.LAST_EXIT = executePipeline(ast)
     elif ast.type is AstType.CMD and ast.cmd:
-        id = os.fork()
-        if id == 0:
-            executeCmd(ast.cmd)
-        _, status = os.waitpid(id, 0)
-        if os.WIFEXITED(status):
-            lastExitStatus = os.WEXITSTATUS(status)
+        if isStateChangingBuiltIn(ast.cmd.name):
+            executeBuiltIns(ast.cmd.name, ast.cmd.args)
         else:
-            lastExitStatus = 1
-    config.LAST_EXIT = lastExitStatus
+            id = os.fork()
+            if id == 0:
+                executeCmd(ast.cmd)
+            _, status = os.waitpid(id, 0)
+            if os.WIFEXITED(status):
+                config.LAST_EXIT = os.WEXITSTATUS(status)
+            else:
+                config.LAST_EXIT = 1
