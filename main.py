@@ -4,9 +4,11 @@ import config
 import readline
 import re
 import sys
+import signal
 
 
 def shell_loop() -> None:
+    _ = signal.signal(signal.SIGQUIT, signal.SIG_IGN)
     while True:
         try:
             line = input("sh.py> ")
