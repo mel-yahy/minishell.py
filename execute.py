@@ -79,6 +79,7 @@ def executePipeline(ast: AstNode) -> int:
     id_1 = os.fork()
     if id_1 == 0:
         _ = signal.signal(signal.SIGQUIT, signal.SIG_DFL)
+        _ = signal.signal(signal.SIGINT, signal.SIG_DFL)
         os.close(readEnd)
         if ast.left and ast.left.cmd:
             _ = os.dup2(writeEnd, 1)
@@ -88,6 +89,7 @@ def executePipeline(ast: AstNode) -> int:
     id_2 = os.fork()
     if id_2 == 0:
         _ = signal.signal(signal.SIGQUIT, signal.SIG_DFL)
+        _ = signal.signal(signal.SIGINT, signal.SIG_DFL)
         os.close(writeEnd)
         if ast.right:
             _ = os.dup2(readEnd, 0)
@@ -108,6 +110,8 @@ def executePipeline(ast: AstNode) -> int:
 
 
 def execute(ast: AstNode) -> None:
+    _ = signal.signal(signal.SIGQUIT, signal.SIG_IGN)
+    _ = signal.signal(signal.SIGINT, signal.SIG_IGN)
     if ast.type is AstType.PIPELINE:
         config.LAST_EXIT = executePipeline(ast)
     elif ast.type is AstType.CMD and ast.cmd:
@@ -117,6 +121,7 @@ def execute(ast: AstNode) -> None:
             id = os.fork()
             if id == 0:
                 _ = signal.signal(signal.SIGQUIT, signal.SIG_DFL)
+                _ = signal.signal(signal.SIGINT, signal.SIG_DFL)
                 executeCmd(ast.cmd)
             _, status = os.waitpid(id, 0)
             if os.WIFEXITED(status):
