@@ -16,8 +16,20 @@ def echoBuiltIn(args: list[str]) -> None:
     sys.exit(0)
 
 
-def exitBuiltIn() -> None:
-    sys.exit(config.LAST_EXIT)
+def exitBuiltIn(args: list[str]) -> None:
+    if len(args) == 1:
+        sys.exit(config.LAST_EXIT)
+    elif len(args) > 1:
+        try:
+            exitCode = int(args[1])
+        except ValueError:
+            print(f"exit: {args[1]}: numeric argument required", file=sys.stderr)
+            sys.exit(2)
+        if len(args) == 2:
+            sys.exit(exitCode)
+        else:
+            print("exit: too many arguments", file=sys.stderr)
+            config.LAST_EXIT = 1
 
 
 def cdBuiltIn(args: list[str]) -> None:
