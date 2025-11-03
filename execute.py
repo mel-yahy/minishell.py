@@ -4,6 +4,7 @@ from utils import expandEnvVars, isNonStateChangingBuiltIn, isStateChangingBuilt
 from sh_builtins import *
 import config
 import os
+import signal
 
 
 def handleHereDoc(redir: RedirNode) -> int:
@@ -77,6 +78,7 @@ def executePipeline(ast: AstNode) -> int:
     readEnd, writeEnd = os.pipe()
     id_1 = os.fork()
     if id_1 == 0:
+        _ = signal.signal(signal.SIGQUIT, signal.SIG_DFL)
         os.close(readEnd)
         if ast.left and ast.left.cmd:
             _ = os.dup2(writeEnd, 1)
@@ -85,6 +87,7 @@ def executePipeline(ast: AstNode) -> int:
             sys.exit(0)
     id_2 = os.fork()
     if id_2 == 0:
+        _ = signal.signal(signal.SIGQUIT, signal.SIG_DFL)
         os.close(writeEnd)
         if ast.right:
             _ = os.dup2(readEnd, 0)
@@ -97,6 +100,9 @@ def executePipeline(ast: AstNode) -> int:
     _, status = os.waitpid(id_2, 0)
     if os.WIFEXITED(status):
         return os.WEXITSTATUS(status)
+    elif os.WIFSIGNALED(status):
+        sig_num = os.WTERMSIG(status)
+        return 128 + sig_num
     else:
         return 1
 
@@ -110,9 +116,13 @@ def execute(ast: AstNode) -> None:
         else:
             id = os.fork()
             if id == 0:
+                _ = signal.signal(signal.SIGQUIT, signal.SIG_DFL)
                 executeCmd(ast.cmd)
             _, status = os.waitpid(id, 0)
             if os.WIFEXITED(status):
                 config.LAST_EXIT = os.WEXITSTATUS(status)
+            elif os.WIFSIGNALED(status):
+                sig_num = os.WTERMSIG(status)
+                config.LAST_EXIT = 128 + sig_num
             else:
                 config.LAST_EXIT = 1
