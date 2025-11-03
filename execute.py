@@ -110,6 +110,7 @@ def executePipeline(ast: AstNode) -> int:
 
 
 def execute(ast: AstNode) -> None:
+    originalAction = signal.getsignal(signal.SIGINT)
     _ = signal.signal(signal.SIGQUIT, signal.SIG_IGN)
     _ = signal.signal(signal.SIGINT, signal.SIG_IGN)
     if ast.type is AstType.PIPELINE:
@@ -131,3 +132,4 @@ def execute(ast: AstNode) -> None:
                 config.LAST_EXIT = 128 + sig_num
             else:
                 config.LAST_EXIT = 1
+    _ = signal.signal(signal.SIGINT, originalAction)
