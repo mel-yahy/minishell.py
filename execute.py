@@ -1,6 +1,7 @@
 import sys
 from defs import AstNode, AstType, CmdNode, RedirNode, RedirType
 from utils import expandEnvVars
+import config
 import os
 
 
@@ -89,3 +90,4 @@ def execute(ast: AstNode) -> None:
             lastExitStatus = status
         else:
             lastExitStatus = 1
+    config.LAST_EXIT = lastExitStatus

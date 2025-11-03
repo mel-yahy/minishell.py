@@ -1,7 +1,9 @@
 from parse import parsePipeline
 from execute import execute
+import config
 import readline
 import re
+import sys
 
 
 def shell_loop() -> None:
@@ -9,7 +11,7 @@ def shell_loop() -> None:
         try:
             line = input("sh.py> ")
         except EOFError:
-            exit(0)
+            sys.exit(config.LAST_EXIT)
         except KeyboardInterrupt:
             print()
             continue
