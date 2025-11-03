@@ -10,6 +10,8 @@ def shell_loop() -> None:
     while True:
         try:
             line = input("sh.py> ")
+            if not line or line.isspace():
+                continue
         except EOFError:
             sys.exit(config.LAST_EXIT)
         except KeyboardInterrupt:
