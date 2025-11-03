@@ -1,14 +1,14 @@
 import sys
 from defs import AstNode, AstType, CmdNode, RedirNode, RedirType
-from utils import expandEnvVars, isNonStateChangingBuiltIn, isStateChangingBuiltIn
+from utils import expand_env_vars, is_non_state_changing_builtin, is_state_changing_builtin
 from sh_builtins import *
 import config
 import os
 import signal
 
 
-def handleHereDoc(redir: RedirNode) -> int:
-    readEnd, writeEnd = os.pipe()
+def handle_here_doc(redir: RedirNode) -> int:
+    read_end, write_end = os.pipe()
     while True:
         try:
             line = input()
@@ -21,14 +21,14 @@ def handleHereDoc(redir: RedirNode) -> int:
         if line == redir.target:
             break
         line += "\n"
-        _ = os.write(writeEnd, line.encode())
-    os.close(writeEnd)
-    return readEnd
+        _ = os.write(write_end, line.encode())
+    os.close(write_end)
+    return read_end
 
 
-def setupRedirs(redir: RedirNode) -> None:
+def setup_redirs(redir: RedirNode) -> None:
     if redir.type is RedirType.HEREDOC:
-        fd = handleHereDoc(redir)
+        fd = handle_here_doc(redir)
     elif redir.type is RedirType.INPUT:
         fd = os.open(redir.target, os.O_RDONLY)
     elif redir.type is RedirType.OUTPUT:
@@ -41,63 +41,63 @@ def setupRedirs(redir: RedirNode) -> None:
     os.close(fd)
 
 
-def executeBuiltIns(cmdName: str, cmdArgs: list[str]) -> None:
-    match cmdName:
+def execute_builtins(cmd_name: str, cmd_args: list[str]) -> None:
+    match cmd_name:
         case "echo":
-            echoBuiltIn(cmdArgs)
+            echo_builtin(cmd_args)
         case "cd":
-            cdBuiltIn(cmdArgs)
+            cd_builtin(cmd_args)
         case "pwd":
-            pwdBuiltIn()
+            pwd_builtin()
         case "export":
-            exportBuiltIn(cmdArgs)
+            export_builtin(cmd_args)
         case "unset":
-            unsetBuiltIn(cmdArgs)
+            unset_builtin(cmd_args)
         case "env":
-            envBuiltIn()
+            env_builtin()
         case "exit":
-            exitBuiltIn(cmdArgs)
+            exit_builtin(cmd_args)
         case _:
             pass
 
 
-def executeCmd(cmd: CmdNode) -> None:
+def execute_cmd(cmd: CmdNode) -> None:
     if cmd.redir:
-        setupRedirs(cmd.redir)
+        setup_redirs(cmd.redir)
     if not cmd.path:
         print(f"{cmd.name}: command was not found", file=sys.stderr)
         sys.exit(127)
-    expandEnvVars(cmd.args)
-    if isNonStateChangingBuiltIn(cmd.name):
-        executeBuiltIns(cmd.name, cmd.args)
+    expand_env_vars(cmd.args)
+    if is_non_state_changing_builtin(cmd.name):
+        execute_builtins(cmd.name, cmd.args)
     else:
         os.execve(cmd.path, cmd.args, config.ENV)
 
 
-def executePipeline(ast: AstNode) -> int:
-    readEnd, writeEnd = os.pipe()
+def execute_pipeline(ast: AstNode) -> int:
+    read_end, write_end = os.pipe()
     id_1 = os.fork()
     if id_1 == 0:
         _ = signal.signal(signal.SIGQUIT, signal.SIG_DFL)
         _ = signal.signal(signal.SIGINT, signal.SIG_DFL)
-        os.close(readEnd)
+        os.close(read_end)
         if ast.left and ast.left.cmd:
-            _ = os.dup2(writeEnd, 1)
-            os.close(writeEnd)
-            executeCmd(ast.left.cmd)
+            _ = os.dup2(write_end, 1)
+            os.close(write_end)
+            execute_cmd(ast.left.cmd)
             sys.exit(0)
     id_2 = os.fork()
     if id_2 == 0:
         _ = signal.signal(signal.SIGQUIT, signal.SIG_DFL)
         _ = signal.signal(signal.SIGINT, signal.SIG_DFL)
-        os.close(writeEnd)
+        os.close(write_end)
         if ast.right:
-            _ = os.dup2(readEnd, 0)
-            os.close(readEnd)
+            _ = os.dup2(read_end, 0)
+            os.close(read_end)
             execute(ast.right)
             sys.exit(config.LAST_EXIT)
-    os.close(readEnd)
-    os.close(writeEnd)
+    os.close(read_end)
+    os.close(write_end)
     _ = os.waitpid(id_1, 0)
     _, status = os.waitpid(id_2, 0)
     if os.WIFEXITED(status):
@@ -110,20 +110,20 @@ def executePipeline(ast: AstNode) -> int:
 
 
 def execute(ast: AstNode) -> None:
-    originalAction = signal.getsignal(signal.SIGINT)
+    original_action = signal.getsignal(signal.SIGINT)
     _ = signal.signal(signal.SIGQUIT, signal.SIG_IGN)
     _ = signal.signal(signal.SIGINT, signal.SIG_IGN)
     if ast.type is AstType.PIPELINE:
-        config.LAST_EXIT = executePipeline(ast)
+        config.LAST_EXIT = execute_pipeline(ast)
     elif ast.type is AstType.CMD and ast.cmd:
-        if isStateChangingBuiltIn(ast.cmd.name):
-            executeBuiltIns(ast.cmd.name, ast.cmd.args)
+        if is_state_changing_builtin(ast.cmd.name):
+            execute_builtins(ast.cmd.name, ast.cmd.args)
         else:
             id = os.fork()
             if id == 0:
                 _ = signal.signal(signal.SIGQUIT, signal.SIG_DFL)
                 _ = signal.signal(signal.SIGINT, signal.SIG_DFL)
-                executeCmd(ast.cmd)
+                execute_cmd(ast.cmd)
             _, status = os.waitpid(id, 0)
             if os.WIFEXITED(status):
                 config.LAST_EXIT = os.WEXITSTATUS(status)
@@ -132,4 +132,4 @@ def execute(ast: AstNode) -> None:
                 config.LAST_EXIT = 128 + sig_num
             else:
                 config.LAST_EXIT = 1
-    _ = signal.signal(signal.SIGINT, originalAction)
+    _ = signal.signal(signal.SIGINT, original_action)

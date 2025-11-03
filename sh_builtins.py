@@ -4,35 +4,35 @@ import re
 import config
 
 
-def echoBuiltIn(args: list[str]) -> None:
-    withOption = len(args) > 1 and args[1] == "-n"
-    i = 2 if withOption else 1
+def echo_builtin(args: list[str]) -> None:
+    with_option = len(args) > 1 and args[1] == "-n"
+    i = 2 if with_option else 1
     while i < len(args):
-        endChar = " " if i != len(args) - 1 else ""
-        print(args[i], end=endChar)
+        end_char = " " if i != len(args) - 1 else ""
+        print(args[i], end=end_char)
         i += 1
-    if not withOption:
+    if not with_option:
         print()
     sys.exit(0)
 
 
-def exitBuiltIn(args: list[str]) -> None:
+def exit_builtin(args: list[str]) -> None:
     if len(args) == 1:
         sys.exit(config.LAST_EXIT)
     elif len(args) > 1:
         try:
-            exitCode = int(args[1])
+            exit_code = int(args[1])
         except ValueError:
             print(f"exit: {args[1]}: numeric argument required", file=sys.stderr)
             sys.exit(2)
         if len(args) == 2:
-            sys.exit(exitCode)
+            sys.exit(exit_code)
         else:
             print("exit: too many arguments", file=sys.stderr)
             config.LAST_EXIT = 1
 
 
-def cdBuiltIn(args: list[str]) -> None:
+def cd_builtin(args: list[str]) -> None:
     if len(args) > 2:
         print("cd: too many arguments", file=sys.stderr)
         config.LAST_EXIT = 1
@@ -45,19 +45,19 @@ def cdBuiltIn(args: list[str]) -> None:
         config.LAST_EXIT = 1
 
 
-def pwdBuiltIn() -> None:
+def pwd_builtin() -> None:
     cwd = os.getcwd()
     print(cwd)
     sys.exit(0)
 
 
-def envBuiltIn() -> None:
+def env_builtin() -> None:
     for key, value in config.ENV.items():
         print(f"{key}={value}")
     sys.exit(0)
 
 
-def exportBuiltIn(args: list[str]) -> None:
+def export_builtin(args: list[str]) -> None:
     config.LAST_EXIT = 0
     for arg in args[1:]:
         if "=" in arg:
@@ -72,7 +72,7 @@ def exportBuiltIn(args: list[str]) -> None:
             config.ENV[key] = value
 
 
-def unsetBuiltIn(args: list[str]) -> None:
+def unset_builtin(args: list[str]) -> None:
     for arg in args[1:]:
         _ = config.ENV.pop(arg, None)
     config.LAST_EXIT = 0

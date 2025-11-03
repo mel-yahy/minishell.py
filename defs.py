@@ -22,11 +22,11 @@ class RedirNode:
     src_fd: int
     next: "RedirNode | None" = None
 
-    def appendBack(self, newNode: "RedirNode") -> None:
+    def append_back(self, new_node: "RedirNode") -> None:
         curr = self
         while curr.next:
             curr = curr.next
-        curr.next = newNode
+        curr.next = new_node
 
 
 @dataclass

@@ -3,13 +3,13 @@ from defs import RedirType
 import os
 
 
-def isRedirToken(redirToken: str) -> bool:
-    redirTokens = {"<", ">", "<<", ">>"}
-    return redirToken in redirTokens
+def is_redir_token(redir_token: str) -> bool:
+    redir_tokens = {"<", ">", "<<", ">>"}
+    return redir_token in redir_tokens
 
 
-def getRedirType(redirToken: str) -> RedirType:
-    match redirToken:
+def get_redir_type(redir_token: str) -> RedirType:
+    match redir_token:
         case "<":
             return RedirType.INPUT
         case ">":
@@ -22,18 +22,18 @@ def getRedirType(redirToken: str) -> RedirType:
             return RedirType.DEFAULT
 
 
-def findCmdPath(cmdName: str) -> str | None:
-    pathEnv = os.getenv("PATH", None)
-    if not pathEnv:
+def find_cmd_path(cmd_name: str) -> str | None:
+    path_env = os.getenv("PATH", None)
+    if not path_env:
         return None
-    for dirPath in pathEnv.split(":"):
-        fullPath = os.path.join(dirPath, cmdName)
-        if os.path.isfile(fullPath) and os.access(fullPath, os.X_OK):
-            return fullPath
+    for dir_path in path_env.split(":"):
+        full_path = os.path.join(dir_path, cmd_name)
+        if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
+            return full_path
     return None
 
 
-def expandEnvVars(args: list[str]) -> None:
+def expand_env_vars(args: list[str]) -> None:
     for i, token in enumerate(args):
         if token.startswith("'") and token.endswith("'"):
             args[i] = token[1:-1]
@@ -46,11 +46,11 @@ def expandEnvVars(args: list[str]) -> None:
             args[i] = os.path.expandvars(args[i])  # You should implement this yourself
 
 
-def isStateChangingBuiltIn(cmdName: str) -> bool:
+def is_state_changing_builtin(cmd_name: str) -> bool:
     builtins = {"cd", "export", "unset", "exit"}
-    return cmdName in builtins
+    return cmd_name in builtins
 
 
-def isNonStateChangingBuiltIn(cmdName: str) -> bool:
+def is_non_state_changing_builtin(cmd_name: str) -> bool:
     builtins = {"echo", "pwd", "env"}
-    return cmdName in builtins
+    return cmd_name in builtins
