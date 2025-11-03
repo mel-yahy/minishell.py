@@ -23,10 +23,14 @@ def exitBuiltIn() -> None:
 def cdBuiltIn(args: list[str]) -> None:
     if len(args) > 2:
         print("cd: too many arguments", file=sys.stderr)
+        config.LAST_EXIT = 1
+        return
     try:
         os.chdir(args[1])
-    except OSError:
-        print(f"cd: {OSError}")
+        config.LAST_EXIT = 0
+    except OSError as error:
+        print(f"cd: {args[1]}: {error.strerror}")
+        config.LAST_EXIT = 1
 
 
 def pwdBuiltIn() -> None:
@@ -42,6 +46,7 @@ def envBuiltIn() -> None:
 
 
 def exportBuiltIn(args: list[str]) -> None:
+    config.LAST_EXIT = 0
     for arg in args[1:]:
         if "=" in arg:
             key, value = arg.split("=", 1)
@@ -51,12 +56,11 @@ def exportBuiltIn(args: list[str]) -> None:
             print(f"export: '{key}': not a valid identifier", file=sys.stderr)
             config.LAST_EXIT = 1
             continue
-        if value is None:
-            config.ENV[key] = ""
-        else:
+        if value is not None:
             config.ENV[key] = value
 
 
 def unsetBuiltIn(args: list[str]) -> None:
     for arg in args[1:]:
         _ = config.ENV.pop(arg, None)
+    config.LAST_EXIT = 0
