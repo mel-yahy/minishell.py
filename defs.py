@@ -43,3 +43,7 @@ class AstNode:
     right: "AstNode | None" = None
     left: "AstNode | None" = None
     cmd: CmdNode | None = None
+
+
+class ParseError(Exception):
+    pass
