@@ -28,13 +28,13 @@ def handle_here_doc(redir: RedirNode) -> int:
 
 def setup_redirs(redir: RedirNode) -> None:
     try:
-        if redir.type is RedirType.HEREDOC:
+        if redir.type == RedirType.HEREDOC:
             fd = handle_here_doc(redir)
-        elif redir.type is RedirType.INPUT:
+        elif redir.type == RedirType.INPUT:
             fd = os.open(redir.target, os.O_RDONLY)
-        elif redir.type is RedirType.OUTPUT:
+        elif redir.type == RedirType.OUTPUT:
             fd = os.open(redir.target, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o644)
-        elif redir.type is RedirType.APPEND:
+        elif redir.type == RedirType.APPEND:
             fd = os.open(redir.target, os.O_CREAT | os.O_WRONLY | os.O_APPEND, 0o644)
         else:
             raise ValueError("It will never reach here... Maybe")
@@ -117,9 +117,9 @@ def execute(ast: AstNode) -> None:
     original_action = signal.getsignal(signal.SIGINT)
     _ = signal.signal(signal.SIGQUIT, signal.SIG_IGN)
     _ = signal.signal(signal.SIGINT, signal.SIG_IGN)
-    if ast.type is AstType.PIPELINE:
+    if ast.type == AstType.PIPELINE:
         config.LAST_EXIT = execute_pipeline(ast)
-    elif ast.type is AstType.CMD and ast.cmd:
+    elif ast.type == AstType.CMD and ast.cmd:
         if is_state_changing_builtin(ast.cmd.name):
             execute_builtins(ast.cmd.name, ast.cmd.args)
         else:
