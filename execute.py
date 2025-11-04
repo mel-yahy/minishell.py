@@ -27,18 +27,22 @@ def handle_here_doc(redir: RedirNode) -> int:
 
 
 def setup_redirs(redir: RedirNode) -> None:
-    if redir.type is RedirType.HEREDOC:
-        fd = handle_here_doc(redir)
-    elif redir.type is RedirType.INPUT:
-        fd = os.open(redir.target, os.O_RDONLY)
-    elif redir.type is RedirType.OUTPUT:
-        fd = os.open(redir.target, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o644)
-    elif redir.type is RedirType.APPEND:
-        fd = os.open(redir.target, os.O_CREAT | os.O_WRONLY | os.O_APPEND, 0o644)
+    try:
+        if redir.type is RedirType.HEREDOC:
+            fd = handle_here_doc(redir)
+        elif redir.type is RedirType.INPUT:
+            fd = os.open(redir.target, os.O_RDONLY)
+        elif redir.type is RedirType.OUTPUT:
+            fd = os.open(redir.target, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o644)
+        elif redir.type is RedirType.APPEND:
+            fd = os.open(redir.target, os.O_CREAT | os.O_WRONLY | os.O_APPEND, 0o644)
+        else:
+            raise ValueError("It will never reach here... Maybe")
+    except OSError as error:
+        print(f"{redir.target}: {error}", file=sys.stderr)
     else:
-        raise ValueError("It will never reach here... Maybe")
-    _ = os.dup2(fd, redir.src_fd)
-    os.close(fd)
+        _ = os.dup2(fd, redir.src_fd)
+        os.close(fd)
 
 
 def execute_builtins(cmd_name: str, cmd_args: list[str]) -> None:
