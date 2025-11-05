@@ -121,6 +121,7 @@ def execute(ast: AstNode) -> None:
         config.LAST_EXIT = execute_pipeline(ast)
     elif ast.type == AstType.CMD and ast.cmd:
         if is_state_changing_builtin(ast.cmd.name):
+            expand_env_vars(ast.cmd.args)
             execute_builtins(ast.cmd.name, ast.cmd.args)
         else:
             id = os.fork()
