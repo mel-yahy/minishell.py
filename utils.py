@@ -39,7 +39,7 @@ def expand_dollar_vars(text: str):
     result = text
     for match in pattern.finditer(text):
         var_name = match.group(1)
-        var_value = os.environ.get(var_name, "")
+        var_value = config.ENV.get(var_name, "")
         result = result.replace(match.group(0), var_value)
     return result
 

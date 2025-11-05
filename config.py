@@ -1,4 +1,4 @@
 import os
 
-ENV = os.environ
+ENV = dict(os.environ)
 LAST_EXIT = 0
