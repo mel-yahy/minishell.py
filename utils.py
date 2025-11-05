@@ -1,6 +1,7 @@
 import config
 from defs import RedirType
 import os
+import re
 
 
 def is_redir_token(redir_token: str) -> bool:
@@ -33,6 +34,16 @@ def find_cmd_path(cmd_name: str) -> str | None:
     return None
 
 
+def expand_dollar_vars(text: str):
+    pattern = re.compile(r"\$([A-Za-z0-9_]+)")
+    result = text
+    for match in pattern.finditer(text):
+        var_name = match.group(1)
+        var_value = os.environ.get(var_name, "")
+        result = result.replace(match.group(0), var_value)
+    return result
+
+
 def expand_env_vars(args: list[str]) -> None:
     for i, token in enumerate(args):
         if token.startswith("'") and token.endswith("'"):
@@ -43,7 +54,7 @@ def expand_env_vars(args: list[str]) -> None:
         if "$?" in args[i]:
             args[i] = args[i].replace("$?", str(config.LAST_EXIT))
         if "$" in args[i]:
-            args[i] = os.path.expandvars(args[i])  # You should implement this yourself
+            args[i] = expand_dollar_vars(args[i])
 
 
 def is_state_changing_builtin(cmd_name: str) -> bool:
